@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picture House — Movie Recommender</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="filmstrip">
+        <div class="filmstrip-holes" id="holes-top"></div>
+    </div>
+
+    <header>
+        <p class="marquee-label">Now showing</p>
+        <h1>Picture <span>House</span></h1>
+        <p class="tagline">A recommendation engine for the discerning viewer</p>
+    </header>
+
+    <main>
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="by-movie">Similar films</button>
+            <button class="tab-btn" data-tab="by-user">For a viewer</button>
+        </div>
+
+        <!-- Tab 1: by movie -->
+        <div id="by-movie" class="tab-panel active">
+            <p class="section-intro">
+                Enter a title and we'll surface films with matching genre profiles from the catalogue.
+            </p>
+
+            <div class="msg error" id="err-movie"></div>
+
+            <div class="field">
+                <label for="movie-title">Film title</label>
+                <input type="text" id="movie-title" placeholder="e.g. Star Wars (1977)">
+            </div>
+
+            <div class="field">
+                <label for="n-movie">How many results</label>
+                <input type="number" id="n-movie" value="5" min="1" max="20">
+            </div>
+
+            <button class="submit-btn" id="btn-movie">Find similar films</button>
+
+            <p class="msg loading" id="load-movie">Searching catalogue...</p>
+
+            <div class="results" id="results-movie"></div>
+        </div>
+
+        <!-- Tab 2: by user -->
+        <div id="by-user" class="tab-panel">
+            <p class="section-intro">
+                Enter a viewer ID (1–943) and we'll recommend films based on the tastes of similar viewers.
+            </p>
+
+            <div class="msg error" id="err-user"></div>
+
+            <div class="field">
+                <label for="user-id">Viewer ID</label>
+                <input type="number" id="user-id" placeholder="e.g. 42" min="1" max="943">
+            </div>
+
+            <div class="field">
+                <label for="n-user">How many results</label>
+                <input type="number" id="n-user" value="5" min="1" max="20">
+            </div>
+
+            <button class="submit-btn" id="btn-user">Get recommendations</button>
+
+            <p class="msg loading" id="load-user">Consulting the catalogue...</p>
+
+            <div class="results" id="results-user"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="filmstrip">
+            <div class="filmstrip-holes" id="holes-bottom"></div>
+        </div>
+        <p>ML-100K dataset &mdash; genre-based &amp; collaborative filtering</p>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

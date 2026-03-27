@@ -1,0 +1,124 @@
+const API_BASE = 'http://localhost:8000';
+
+// ── Film strip ──────────────────────────────────────────────
+function fillHoles(containerId) {
+    const el = document.getElementById(containerId);
+    const count = Math.ceil(window.innerWidth / 28) + 4;
+    el.innerHTML = Array(count).fill('<div class="hole"></div>').join('');
+}
+
+// ── Tabs ────────────────────────────────────────────────────
+function initTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+}
+
+// ── UI helpers ──────────────────────────────────────────────
+function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+function clearErr(id) {
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.style.display = 'none';
+}
+
+function setLoading(id, on) {
+    document.getElementById(id).style.display = on ? 'block' : 'none';
+}
+
+// ── Results renderer ────────────────────────────────────────
+function renderResults(containerId, items) {
+    const el = document.getElementById(containerId);
+    if (!items || items.length === 0) {
+        el.innerHTML = '<p class="msg error" style="display:block">No results found.</p>';
+        return;
+    }
+    const rows = items.map((item, i) => {
+        const score = item.similarity_score !== undefined
+            ? (item.similarity_score * 100).toFixed(0) + '% match'
+            : item.recommendation_score + ' votes';
+        return `
+            <div class="result-item">
+                <span class="result-num">${String(i + 1).padStart(2, '0')}</span>
+                <span class="result-title">${item.title}</span>
+                <span class="result-score">${score}</span>
+            </div>`;
+    }).join('');
+    el.innerHTML = `<p class="results-heading">Results</p>${rows}`;
+}
+
+// ── API calls ───────────────────────────────────────────────
+async function fetchSimilarMovies() {
+    clearErr('err-movie');
+    document.getElementById('results-movie').innerHTML = '';
+
+    const title = document.getElementById('movie-title').value.trim();
+    const n = document.getElementById('n-movie').value;
+    if (!title) { showErr('err-movie', 'Please enter a film title.'); return; }
+
+    setLoading('load-movie', true);
+    try {
+        const res = await fetch(`${API_BASE}/api/movies/${encodeURIComponent(title)}?n=${n}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Film not found in catalogue.');
+        renderResults('results-movie', data.recommendations);
+    } catch (e) {
+        showErr('err-movie', e.message);
+    } finally {
+        setLoading('load-movie', false);
+    }
+}
+
+async function fetchUserRecommendations() {
+    clearErr('err-user');
+    document.getElementById('results-user').innerHTML = '';
+
+    const userId = document.getElementById('user-id').value.trim();
+    const n = document.getElementById('n-user').value;
+    if (!userId) { showErr('err-user', 'Please enter a viewer ID.'); return; }
+
+    setLoading('load-user', true);
+    try {
+        const res = await fetch(`${API_BASE}/api/recommend/user/${userId}?n=${n}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Viewer not found.');
+        renderResults('results-user', data.recommendations);
+    } catch (e) {
+        showErr('err-user', e.message);
+    } finally {
+        setLoading('load-user', false);
+    }
+}
+
+// ── Enter key shortcuts ─────────────────────────────────────
+function initEnterKeys() {
+    ['movie-title', 'n-movie'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', e => {
+            if (e.key === 'Enter') fetchSimilarMovies();
+        });
+    });
+    ['user-id', 'n-user'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', e => {
+            if (e.key === 'Enter') fetchUserRecommendations();
+        });
+    });
+}
+
+// ── Init ────────────────────────────────────────────────────
+fillHoles('holes-top');
+fillHoles('holes-bottom');
+initTabs();
+initEnterKeys();
+
+document.getElementById('btn-movie').addEventListener('click', fetchSimilarMovies);
+document.getElementById('btn-user').addEventListener('click', fetchUserRecommendations);
