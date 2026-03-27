@@ -43,18 +43,37 @@ function renderResults(containerId, items) {
         el.innerHTML = '<p class="msg error" style="display:block">No results found.</p>';
         return;
     }
-    const rows = items.map((item, i) => {
+
+    const cards = items.map((item, i) => {
         const score = item.similarity_score !== undefined
-            ? (item.similarity_score * 100).toFixed(0) + '% match'
-            : item.recommendation_score + ' votes';
+            ? (item.similarity_score * 100).toFixed(0) + '% genre match'
+            : 'predicted ' + item.recommendation_score + ' ★';
+
+        const poster = item.poster
+            ? `<img class="card-poster" src="${item.poster}" alt="${item.title}" loading="lazy">`
+            : `<div class="card-poster-placeholder">no poster</div>`;
+
+        const overview = item.overview
+            ? `<p class="card-overview">${item.overview}</p>`
+            : '';
+
+        const tmdbRating = item.tmdb_rating
+            ? ` &nbsp;·&nbsp; TMDB ${item.tmdb_rating.toFixed(1)}`
+            : '';
+
         return `
-            <div class="result-item">
-                <span class="result-num">${String(i + 1).padStart(2, '0')}</span>
-                <span class="result-title">${item.title}</span>
-                <span class="result-score">${score}</span>
+            <div class="card">
+                ${poster}
+                <div class="card-body">
+                    <p class="card-num">${String(i + 1).padStart(2, '0')}</p>
+                    <p class="card-title">${item.title}</p>
+                    <p class="card-score">${score}${tmdbRating}</p>
+                    ${overview}
+                </div>
             </div>`;
     }).join('');
-    el.innerHTML = `<p class="results-heading">Results</p>${rows}`;
+
+    el.innerHTML = `<p class="results-heading">Results</p><div class="cards">${cards}</div>`;
 }
 
 // ── API calls ───────────────────────────────────────────────

@@ -234,38 +234,78 @@ input[type="number"] {
     letter-spacing: 0.25em;
     text-transform: uppercase;
     color: var(--dim);
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     padding-bottom: 8px;
     border-bottom: 1px solid #2e2a23;
 }
 
-.result-item {
+/* Poster card grid */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 24px;
+}
+
+.card {
     display: flex;
-    align-items: baseline;
-    gap: 16px;
-    padding: 14px 0;
-    border-bottom: 1px solid #2a261f;
+    flex-direction: column;
 }
 
-.result-num {
+.card-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    background: #2a261f;
+    display: block;
+}
+
+.card-poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: #2a261f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 0.72em;
-    color: var(--gold);
-    min-width: 24px;
-    flex-shrink: 0;
-}
-
-.result-title {
-    font-size: 1em;
-    color: var(--cream);
-    flex: 1;
-}
-
-.result-score {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 0.7em;
+    font-size: 0.65em;
     color: var(--dim);
-    flex-shrink: 0;
+    text-align: center;
+    padding: 8px;
+}
+
+.card-body {
+    padding: 10px 0 0;
+}
+
+.card-num {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.65em;
+    color: var(--gold);
+    margin-bottom: 4px;
+}
+
+.card-title {
+    font-size: 0.88em;
+    color: var(--cream);
+    line-height: 1.3;
+    margin-bottom: 4px;
+}
+
+.card-score {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.68em;
+    color: var(--dim);
+}
+
+.card-overview {
+    font-size: 0.75em;
+    color: var(--dim);
+    line-height: 1.5;
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* ── Footer ── */
