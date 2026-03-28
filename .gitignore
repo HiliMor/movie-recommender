@@ -12,8 +12,9 @@ __pycache__/
 # Secrets
 .env
 
-# Dataset (download separately — see README)
+# Datasets (download separately — see README)
 ml-100k/
+ml-25m/
 
 # claude
 .claude

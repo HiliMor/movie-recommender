@@ -40,8 +40,9 @@ movie-recommender/
 ├── index.html                    # Frontend
 ├── style.css                     # Styles
 ├── main.js                       # Frontend logic
-├── 01_load_explore_data.ipynb    # Data exploration notebook
-├── ml-100k/                      # MovieLens 100K dataset (not in git)
+├── 01_load_explore_data.ipynb    # ML-100K data exploration
+├── 02_explore_25m.ipynb          # ML-25M exploration and filtering
+├── ml-25m/                       # MovieLens 25M dataset (not in git)
 ├── .env                          # TMDB API token (not in git)
 ├── venv/                         # Python virtual environment (not in git)
 └── README.md
@@ -110,9 +111,15 @@ All recommendation responses include `title`, a score field, `poster`, `overview
 
 ## Data
 
-**MovieLens 100K** — 100,000 ratings from 943 users on 1,682 movies, collected 1987–1998. Ratings on a 1–5 scale, 19 genre categories.
+**MovieLens 25M** — 25 million ratings from 162,000 users on 62,000 movies, collected up to 2019. Ratings on a 0.5–5 scale, 19 genre categories.
 
-Small by modern standards, but ideal for learning — fast to iterate, clean, and the standard benchmark used in ML literature.
+For performance, the app filters to:
+- Movies with 50+ ratings — 13,176 movies
+- Users with 1,000+ ratings for SVD — 2,560 most active users
+
+This keeps the recommendation quality high (more signal, less noise) while keeping the SVD matrix at a manageable size (~33M cells vs 1.3B unfiltered).
+
+The full exploration and filtering process is documented in `02_explore_25m.ipynb`.
 
 ---
 

@@ -54,26 +54,43 @@ def fetch_tmdb_data(ml_title):
         return {'poster': None, 'overview': None, 'tmdb_rating': None}
 
 # ── Load data ────────────────────────────────────────────────
-ratings = pd.read_csv('ml-100k/u.data', sep='\t', header=None,
-                      names=['userId', 'movieId', 'rating', 'timestamp'])
+ratings = pd.read_csv('ml-25m/ratings_filtered.csv')
 
-movies = pd.read_csv('ml-100k/u.item', sep='|', header=None, encoding='latin-1',
-                     names=['movieId', 'title', 'releaseDate', 'videoReleaseDate', 'url',
-                            'unknown', 'action', 'adventure', 'animation', 'childrens', 'comedy',
-                            'crime', 'documentary', 'drama', 'fantasy', 'film_noir', 'horror',
-                            'musical', 'mystery', 'romance', 'sci_fi', 'thriller', 'war', 'western'])
+movies = pd.read_csv('ml-25m/movies_filtered.csv')
 
 # ── Content-based: genre similarity matrix ───────────────────
-genre_columns = ['unknown', 'action', 'adventure', 'animation', 'childrens', 'comedy',
-                 'crime', 'documentary', 'drama', 'fantasy', 'film_noir', 'horror',
-                 'musical', 'mystery', 'romance', 'sci_fi', 'thriller', 'war', 'western']
+# ── Convert genre strings to binary columns ──────────────────
+# "Adventure|Animation|Children" → adventure=1, animation=1, children=1, rest=0
+#
+# str.get_dummies('|') splits each string by '|' and creates one column
+# per unique value, filling with 1 if present, 0 if not.
+# So a movie with "Action|Comedy" gets action=1, comedy=1, drama=0, etc.
+genre_dummies = movies['genres'].str.get_dummies('|')
+
+# Drop movies with no genres listed
+if '(no genres listed)' in genre_dummies.columns:
+    genre_dummies = genre_dummies.drop(columns=['(no genres listed)'])
+
+genre_columns = genre_dummies.columns.tolist()
+
+# Attach the binary columns back to the movies dataframe
+movies = pd.concat([movies, genre_dummies], axis=1)
 
 genre_matrix = movies[genre_columns].values
 similarity_matrix = cosine_similarity(genre_matrix)
 
 # ── Collaborative: SVD matrix factorization ──────────────────
-# Step 1: build a users × movies matrix of ratings (0 = not rated)
-user_movie_matrix = ratings.pivot(index='userId', columns='movieId', values='rating').fillna(0)
+# Step 1: filter to active users only (rated 50+ movies)
+# The full dataset has 162k users × 13k movies = too large to fit in memory
+# Active users have richer taste profiles anyway — better recommendations
+ratings_per_user = ratings.groupby('userId').size()
+active_users = ratings_per_user[ratings_per_user >= 1000].index
+ratings_svd = ratings[ratings['userId'].isin(active_users)]
+
+print(f"Active users (1000+ ratings): {len(active_users)}")
+
+# Step 2: build a users × movies matrix of ratings (0 = not rated)
+user_movie_matrix = ratings_svd.pivot(index='userId', columns='movieId', values='rating').fillna(0)
 
 # Step 2: decompose into latent factors
 # n_components = how many hidden "taste dimensions" to find
