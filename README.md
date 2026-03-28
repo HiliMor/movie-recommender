@@ -1,62 +1,75 @@
-# 🎬 Movie Recommender System
+# Movie Recommender System
 
-A complete machine learning recommendation system built from scratch using content-based filtering, collaborative filtering, and hybrid approaches.
+A machine learning recommendation system built from scratch as a learning project. Covers content-based filtering, collaborative filtering with SVD, semantic search with HuggingFace embeddings, and a TMDB-enriched frontend.
 
-## Features
+## How it works
 
-### 1. Content-Based Recommendations
+### 1. Similar films (content-based)
 
-Find movies similar to a movie you like based on genres
+Given a movie title, finds films with overlapping genres using cosine similarity on genre vectors.
 
-- Uses cosine similarity between movie genre vectors
-- Fast and interpretable
+Each movie is represented as a binary vector across 19 genre flags. Cosine similarity measures the angle between two vectors — small angle means similar genres, regardless of how many genres each film has.
 
-### 2. Collaborative Filtering
+### 2. For a viewer (collaborative filtering — SVD)
 
-Get personalized recommendations based on user ratings
+Given a user ID, predicts ratings for every movie the user hasn't seen and returns the highest-predicted ones.
 
-- Finds users with similar rating patterns
-- Recommends movies highly-rated by similar users
-- Learns from user preferences
+Uses **Truncated SVD** (matrix factorization) on the 943×1682 user-movie ratings matrix. SVD decomposes the matrix into latent factors — hidden "taste dimensions" like affinity for slow dramas or action films — without you ever labeling them. Reconstructing the matrix fills in the blanks with predicted ratings.
 
-### 3. Hybrid Approach
+This replaces the earlier nearest-neighbor approach, which only looked at who rated what. SVD considers how much users rated things and finds deeper patterns across all 100,000 ratings at once.
 
-Combines both methods for best results
+### 3. Search (semantic search — HuggingFace)
 
-- Balances genre similarity with user preferences
-- More accurate recommendations
+Takes a plain English description like *"dark psychological thriller"* or *"funny film for kids"* and returns the closest matching movies.
 
-## Project Structure
+Uses `all-MiniLM-L6-v2` from HuggingFace, a sentence transformer model trained on over 1 billion text pairs. It maps any text to a 384-dimensional vector (an "embedding") that encodes meaning. At startup, all 1682 movies are embedded once. At query time, the query is embedded with the same model, and cosine similarity finds the nearest movies in that 384-dimensional space.
+
+Because it measures angle (not distance), a short query like *"war drama"* and a long one like *"an intense emotional film set during a conflict with a focus on human suffering"* land in roughly the same place.
+
+### 4. TMDB enrichment
+
+Every recommendation is enriched with poster, overview, and rating from the TMDB API. Movie titles are parsed from the MovieLens format (`"Star Wars (1977)"`) into title + year, searched against TMDB, and the first result is used.
+
+---
+
+## Project structure
 
 ```
 movie-recommender/
-├── 01_load_explore_data.ipynb    # Data loading and EDA
-├── app.py                         # Flask API server
-├── ml-100k/                       # MovieLens dataset
-├── venv/                          # Python virtual environment
-└── README.md                      # This file
+├── app.py                        # Flask API — models, endpoints
+├── index.html                    # Frontend
+├── style.css                     # Styles
+├── main.js                       # Frontend logic
+├── 01_load_explore_data.ipynb    # Data exploration notebook
+├── ml-100k/                      # MovieLens 100K dataset (not in git)
+├── .env                          # TMDB API token (not in git)
+├── venv/                         # Python virtual environment (not in git)
+└── README.md
 ```
 
-## Installation & Setup
+---
 
-### 1. Clone/Download the project
+## Setup
 
-```bash
-cd movie-recommender
+### 1. Get the dataset
+
+Download [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/) and place the `ml-100k/` folder in the project root.
+
+### 2. Get a TMDB API token
+
+Create a free account at [themoviedb.org](https://www.themoviedb.org), go to Settings → API, and copy the **API Read Access Token**.
+
+Create a `.env` file:
+
+```
+TMDB_TOKEN=your_token_here
 ```
 
-### 2. Activate virtual environment
+### 3. Install dependencies
 
 ```bash
-source venv/bin/activate  # Mac/Linux
-# or
-venv\Scripts\activate     # Windows
-```
-
-### 3. Install dependencies (if needed)
-
-```bash
-pip install pandas numpy matplotlib seaborn scikit-learn jupyter flask flask-cors
+source venv/bin/activate
+pip install pandas numpy scikit-learn flask flask-cors requests python-dotenv sentence-transformers torch transformers jupyter
 ```
 
 ### 4. Run the API
@@ -65,183 +78,83 @@ pip install pandas numpy matplotlib seaborn scikit-learn jupyter flask flask-cor
 python app.py
 ```
 
-You should see:
-
-```
-🚀 Starting API at http://localhost:8000
- * Debugger is active!
-```
-
-## API Usage
-
-### Health Check
-
-```
-GET http://localhost:8000/api/health
-```
-
-Response:
-
-```json
-{
-  "status": "healthy",
-  "movies": 1682,
-  "users": 943
-}
-```
-
-### Get Similar Movies (Content-Based)
-
-```
-GET http://localhost:8000/api/movies/Star%20Wars%20%281977%29?n=5
-```
-
-Parameters:
-
-- `movie_title` (URL): Movie name (URL encoded)
-- `n` (query): Number of recommendations (default: 5)
-
-Response:
-
-```json
-{
-  "movie": "Star Wars (1977)",
-  "recommendations": [
-    {
-      "title": "Empire Strikes Back, The (1980)",
-      "similarity_score": 0.913
-    },
-    ...
-  ]
-}
-```
-
-### Get User Recommendations (Collaborative Filtering)
-
-```
-GET http://localhost:8000/api/recommend/user/1?n=5
-```
-
-Parameters:
-
-- `user_id` (URL): User ID (1-943)
-- `n` (query): Number of recommendations (default: 5)
-
-Response:
-
-```json
-{
-  "user_id": 1,
-  "recommendations": [
-    {
-      "title": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb (1963)",
-      "recommendation_score": 8
-    },
-    ...
-  ]
-}
-```
-
-## Data
-
-Uses the **MovieLens 100K Dataset**:
-
-- 100,000 ratings from 943 users on 1,682 movies
-- Ratings on a 1-5 scale
-- 19 movie genres
-
-## Technologies Used
-
-- **Python**: Core language
-- **Pandas**: Data manipulation
-- **NumPy**: Numerical computing
-- **Scikit-learn**: Machine learning (cosine similarity)
-- **Flask**: REST API framework
-- **Jupyter**: Data exploration
-
-## Results
-
-### Content-Based Performance
-
-- Finds movies with similar genres
-- Fast and explainable
-- Works well for similar movie discovery
-
-### Collaborative Filtering Performance
-
-- Personalized to user preferences
-- Learns from rating patterns
-- Better for discovering new genres users might like
-
-### Example Results
-
-**For Star Wars fans:**
-
-- Recommends: Empire Strikes Back, Star Trek, Starship Troopers
-- Reason: Similar sci-fi/adventure genres
-
-**For User 1 (mixed taste):**
-
-- Recommends: Dr. Strangelove, Schindler's List, One Flew Over the Cuckoo's Nest
-- Reason: Other users with similar taste liked these
-
-## Next Steps & Improvements
-
-### Short-term
-
-- [ ] Add web UI (HTML/CSS/JavaScript)
-- [ ] Add movie search functionality
-- [ ] Add user registration and ratings
-- [ ] Improve similarity scoring with weighted genres
-
-### Medium-term
-
-- [ ] Deploy to cloud (Heroku, AWS, Google Cloud)
-- [ ] Add database (SQLite, PostgreSQL)
-- [ ] Implement matrix factorization (SVD)
-- [ ] Add deep learning models (neural networks)
-
-### Long-term
-
-- [ ] Real-time rating updates
-- [ ] Cold-start problem solutions
-- [ ] A/B testing framework
-- [ ] Advanced metrics (precision@K, NDCG, MAP)
-
-## Skills Learned
-
-✅ Data loading and exploration
-✅ Similarity metrics (cosine similarity)
-✅ Content-based filtering
-✅ Collaborative filtering
-✅ Matrix operations and linear algebra
-✅ REST API design
-✅ Flask web framework
-✅ Machine learning workflows
-
-## License
-
-MIT License - Feel free to use for learning and projects
-
-## Author
-
-Built as a learning project for understanding recommendation systems from first principles.
+The server starts at `http://localhost:8000`. Open `index.html` directly in your browser.
 
 ---
 
-## Running the Jupyter Notebook
+## API endpoints
 
-To explore the data and see the analysis:
-
-```bash
-jupyter notebook 01_load_explore_data.ipynb
+### Health check
+```
+GET /api/health
 ```
 
-This notebook contains:
+### Similar films
+```
+GET /api/movies/Toy%20Story%20(1995)?n=5
+```
 
-- Data loading and exploration
-- Similarity matrix calculations
-- Content-based recommender
-- Collaborative filtering recommender
-- Hybrid recommender
-- Visualizations and statistics
+### User recommendations
+```
+GET /api/recommend/user/42?n=5
+```
+
+### Semantic search
+```
+GET /api/search?q=funny+movie+for+kids&n=5
+```
+
+All recommendation responses include `title`, a score field, `poster`, `overview`, and `tmdb_rating`.
+
+---
+
+## Data
+
+**MovieLens 100K** — 100,000 ratings from 943 users on 1,682 movies, collected 1987–1998. Ratings on a 1–5 scale, 19 genre categories.
+
+Small by modern standards, but ideal for learning — fast to iterate, clean, and the standard benchmark used in ML literature.
+
+---
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Language | Python 3.12 |
+| Data | Pandas, NumPy |
+| ML | Scikit-learn (SVD, cosine similarity) |
+| Embeddings | sentence-transformers, HuggingFace `all-MiniLM-L6-v2` |
+| API | Flask, Flask-CORS |
+| Movie data | TMDB API |
+| Frontend | HTML, CSS, vanilla JS |
+| Notebook | Jupyter |
+
+---
+
+## What I learned building this
+
+This project was built step by step, each piece introducing a new concept.
+
+**Machine learning concepts**
+- What cosine similarity actually measures — angle between vectors, not distance — and why that matters for text
+- Content-based filtering: representing movies as genre vectors and finding nearest neighbors
+- Collaborative filtering: why nearest-neighbor is limited and how SVD fixes it by finding latent patterns across the entire dataset
+- Matrix factorization: decomposing a users × movies matrix into hidden "taste dimensions"
+- Embeddings: how a neural network maps text into a vector space where meaning determines position
+- The difference between genre-based similarity (what a movie *is*) and semantic similarity (what a movie *feels like*)
+
+**Working with data**
+- Loading and exploring datasets with Pandas
+- Building and manipulating matrices with NumPy
+- What the MovieLens dataset looks like and how ratings data is structured
+
+**APIs and external services**
+- How REST APIs work — making HTTP requests, reading JSON responses
+- Authentication with Bearer tokens vs API keys
+- Integrating the TMDB API to enrich recommendations with posters and descriptions
+- Loading a pre-trained model from HuggingFace in one line and using it immediately
+
+**Software structure**
+- Separating a project into HTML / CSS / JS — one responsibility per file
+- Building a Flask backend and connecting it to a frontend via fetch calls
+- Keeping secrets out of code with `.env` files and `.gitignore`

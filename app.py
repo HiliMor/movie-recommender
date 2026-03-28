@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import TruncatedSVD
+from sentence_transformers import SentenceTransformer
 import requests
 import re
 import os
@@ -95,6 +96,26 @@ predicted_df = pd.DataFrame(
 
 print("SVD model trained.")
 
+# ── Semantic search: HuggingFace embeddings ──────────────────
+# Load a small but powerful sentence embedding model (~90MB, cached after first run)
+# "all-MiniLM-L6-v2" maps any text to a 384-dimensional vector
+print("Loading embedding model...")
+embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# Build a text description for each movie from its title + active genres.
+# This is what the model will embed — richer text = better semantic matching.
+def movie_to_text(row):
+    active_genres = [g.replace('_', ' ') for g in genre_columns if row[g] == 1]
+    genre_str = ', '.join(active_genres) if active_genres else 'unknown'
+    return f"{row['title']} — {genre_str}"
+
+movies['text'] = movies.apply(movie_to_text, axis=1)
+
+# Embed all 1682 movies once at startup — shape: (1682, 384)
+# This takes ~5s on CPU and is reused for every search query
+movie_embeddings = embed_model.encode(movies['text'].tolist(), show_progress_bar=False)
+print("Embedding model ready.")
+
 # ── Recommender functions ────────────────────────────────────
 def recommend_similar_movies(movie_title, n_recommendations=5):
     try:
@@ -136,6 +157,25 @@ def recommend_movies_for_user(user_id, n_recommendations=5):
         })
     return results
 
+def semantic_search(query, n_recommendations=5):
+    # Embed the user's query using the same model — same vector space as movies
+    query_embedding = embed_model.encode([query])
+
+    # Compute cosine similarity between the query and every movie embedding
+    scores = cosine_similarity(query_embedding, movie_embeddings)[0]
+
+    # Get top N indices sorted by score
+    top_indices = scores.argsort()[-n_recommendations:][::-1]
+
+    return [
+        {
+            'title': movies.iloc[idx]['title'],
+            'similarity_score': float(scores[idx]),
+            **fetch_tmdb_data(movies.iloc[idx]['title'])
+        }
+        for idx in top_indices
+    ]
+
 # Create Flask app
 app = Flask(__name__)
 CORS(app)
@@ -143,9 +183,6 @@ CORS(app)
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({'message': 'Welcome to Movie Recommender API!', 'status': 'running'})
-
-# API endpoints
-@app.route('/api/health', methods=['GET'])
 
 # API endpoints
 @app.route('/api/health', methods=['GET'])
@@ -167,6 +204,16 @@ def recommend_user(user_id):
     if recs is None:
         return jsonify({'error': f'User not found: {user_id}'}), 404
     return jsonify({'user_id': user_id, 'recommendations': recs})
+
+@app.route('/api/search', methods=['GET'])
+def search():
+    # e.g. GET /api/search?q=funny+movie+for+kids&n=5
+    query = request.args.get('q', '').strip()
+    n = request.args.get('n', 5, type=int)
+    if not query:
+        return jsonify({'error': 'Missing query parameter q'}), 400
+    recs = semantic_search(query, n_recommendations=n)
+    return jsonify({'query': query, 'recommendations': recs})
 
 if __name__ == '__main__':
     print("🚀 Starting API at http://localhost:8000")

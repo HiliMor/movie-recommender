@@ -20,12 +20,38 @@
 
     <main>
         <div class="tab-bar">
-            <button class="tab-btn active" data-tab="by-movie">Similar films</button>
+            <button class="tab-btn active" data-tab="by-search">Search</button>
+            <button class="tab-btn" data-tab="by-movie">Similar films</button>
             <button class="tab-btn" data-tab="by-user">For a viewer</button>
         </div>
 
+        <!-- Tab 0: semantic search -->
+        <div id="by-search" class="tab-panel active">
+            <p class="section-intro">
+                Describe what you're in the mood for. Plain English — no need for exact titles.
+            </p>
+
+            <div class="msg error" id="err-search"></div>
+
+            <div class="field">
+                <label for="search-query">What are you looking for?</label>
+                <input type="text" id="search-query" placeholder="e.g. dark psychological thriller, funny film for kids">
+            </div>
+
+            <div class="field">
+                <label for="n-search">How many results</label>
+                <input type="number" id="n-search" value="5" min="1" max="20">
+            </div>
+
+            <button class="submit-btn" id="btn-search">Find films</button>
+
+            <p class="msg loading" id="load-search">Searching...</p>
+
+            <div class="results" id="results-search"></div>
+        </div>
+
         <!-- Tab 1: by movie -->
-        <div id="by-movie" class="tab-panel active">
+        <div id="by-movie" class="tab-panel">
             <p class="section-intro">
                 Enter a title and we'll surface films with matching genre profiles from the catalogue.
             </p>

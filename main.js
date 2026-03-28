@@ -77,6 +77,27 @@ function renderResults(containerId, items) {
 }
 
 // ── API calls ───────────────────────────────────────────────
+async function fetchSemanticSearch() {
+    clearErr('err-search');
+    document.getElementById('results-search').innerHTML = '';
+
+    const query = document.getElementById('search-query').value.trim();
+    const n = document.getElementById('n-search').value;
+    if (!query) { showErr('err-search', 'Please describe what you\'re looking for.'); return; }
+
+    setLoading('load-search', true);
+    try {
+        const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}&n=${n}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Search failed.');
+        renderResults('results-search', data.recommendations);
+    } catch (e) {
+        showErr('err-search', e.message);
+    } finally {
+        setLoading('load-search', false);
+    }
+}
+
 async function fetchSimilarMovies() {
     clearErr('err-movie');
     document.getElementById('results-movie').innerHTML = '';
@@ -121,6 +142,11 @@ async function fetchUserRecommendations() {
 
 // ── Enter key shortcuts ─────────────────────────────────────
 function initEnterKeys() {
+    ['search-query', 'n-search'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', e => {
+            if (e.key === 'Enter') fetchSemanticSearch();
+        });
+    });
     ['movie-title', 'n-movie'].forEach(id => {
         document.getElementById(id).addEventListener('keydown', e => {
             if (e.key === 'Enter') fetchSimilarMovies();
@@ -139,5 +165,6 @@ fillHoles('holes-bottom');
 initTabs();
 initEnterKeys();
 
+document.getElementById('btn-search').addEventListener('click', fetchSemanticSearch);
 document.getElementById('btn-movie').addEventListener('click', fetchSimilarMovies);
 document.getElementById('btn-user').addEventListener('click', fetchUserRecommendations);
