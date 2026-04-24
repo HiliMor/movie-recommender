@@ -27,7 +27,10 @@ def _cache_fresh(path):
     if not os.path.exists(path):
         return False
     t = os.path.getmtime(path)
-    return all(os.path.getmtime(s) <= t for s in _SOURCE_FILES)
+    existing = [s for s in _SOURCE_FILES if os.path.exists(s)]
+    if not existing:
+        return True  # no source files on this machine, trust the cache
+    return all(os.path.getmtime(s) <= t for s in existing)
 
 POP_CACHE = os.path.join(CACHE_DIR, 'popularity.npy')
 
@@ -81,17 +84,22 @@ movies = pd.concat([movies, genre_dummies], axis=1)
 genre_matrix = movies[genre_columns].values.astype('float32')
 
 # ── Popularity scores ────────────────────────────────────────
+RATINGS_FILE = os.path.join(BASE_DIR, 'ml-25m/ratings_filtered.csv')
+
 if _cache_fresh(POP_CACHE):
     popularity_scores = np.load(POP_CACHE)
-else:
+elif os.path.exists(RATINGS_FILE):
     print("Loading ratings to build popularity cache...")
-    ratings = pd.read_csv(os.path.join(BASE_DIR, 'ml-25m/ratings_filtered.csv'))
+    ratings = pd.read_csv(RATINGS_FILE)
     _rating_counts = ratings.groupby('movieId').size()
     movies['_pop'] = movies['movieId'].map(_rating_counts).fillna(0)
     _log_pop = np.log1p(movies['_pop'].values.astype(float))
     popularity_scores = (_log_pop - _log_pop.min()) / (_log_pop.max() - _log_pop.min() + 1e-9)
     np.save(POP_CACHE, popularity_scores)
     print("Popularity cache saved.")
+else:
+    print("No ratings file — using uniform popularity.")
+    popularity_scores = np.ones(len(movies))
 
 # ── TF-IDF search index ──────────────────────────────────────
 print("Building TF-IDF search index...")

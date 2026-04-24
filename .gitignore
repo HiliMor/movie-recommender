@@ -24,4 +24,5 @@ ml-25m/README.txt
 
 # claude
 .claude
-.cache/
+.cache/*
+!.cache/popularity.npy
