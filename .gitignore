@@ -12,13 +12,15 @@ __pycache__/
 # Secrets
 .env
 
-# Datasets (download separately — see README)
+# Datasets — large raw files excluded, only keep what the app needs at runtime
 ml-100k/
-ml-25m/
+ml-25m/ratings.csv
+ml-25m/ratings_filtered.csv
+ml-25m/genome-scores.csv
+ml-25m/genome-tags.csv
+ml-25m/tags.csv
+ml-25m/links.csv
+ml-25m/README.txt
 
 # claude
 .claude
-
-# Raw dataset files (too large for git — generate filtered versions locally)
-ml-25m/ratings.csv
-ml-25m/ratings_filtered.csv

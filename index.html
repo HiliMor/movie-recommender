@@ -22,7 +22,6 @@
         <div class="tab-bar">
             <button class="tab-btn active" data-tab="by-search">Search</button>
             <button class="tab-btn" data-tab="by-movie">Similar films</button>
-            <button class="tab-btn" data-tab="by-user">For a viewer</button>
         </div>
 
         <!-- Tab 0: semantic search -->
@@ -76,38 +75,13 @@
             <div class="results" id="results-movie"></div>
         </div>
 
-        <!-- Tab 2: by user -->
-        <div id="by-user" class="tab-panel">
-            <p class="section-intro">
-                Enter a viewer ID from the MovieLens dataset and we'll recommend films based on what similar viewers rated highly — films you haven't seen but are likely to enjoy. Use one of the example IDs below to try it out.
-            </p>
-
-            <div class="msg error" id="err-user"></div>
-
-            <div class="field">
-                <label for="user-id">Viewer ID</label>
-                <input type="number" id="user-id" placeholder="e.g. 72315" min="1" max="162541">
-                <p class="field-hint" id="sample-users-hint">Loading example IDs&hellip;</p>
-            </div>
-
-            <div class="field">
-                <label for="n-user">How many results</label>
-                <input type="number" id="n-user" value="5" min="1" max="20">
-            </div>
-
-            <button class="submit-btn" id="btn-user">Get recommendations</button>
-
-            <p class="msg loading" id="load-user">Consulting the catalogue...</p>
-
-            <div class="results" id="results-user"></div>
-        </div>
     </main>
 
     <footer>
         <div class="filmstrip">
             <div class="filmstrip-holes" id="holes-bottom"></div>
         </div>
-        <p>MovieLens 25M &mdash; genre-based, collaborative filtering &amp; semantic search</p>
+        <p>MovieLens 25M &mdash; genre similarity &amp; semantic search</p>
     </footer>
 
     <script src="main.js"></script>

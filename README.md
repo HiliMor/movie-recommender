@@ -69,13 +69,13 @@ source venv/bin/activate
 pip install pandas numpy scikit-learn flask flask-cors requests python-dotenv sentence-transformers torch transformers jupyter
 ```
 
-### 4. Run the API
+### 4. Run the app
 
 ```bash
 python app.py
 ```
 
-The server starts at `http://localhost:8000`. Open `index.html` directly in your browser.
+The server starts at `http://localhost:8000`. Open that URL in your browser — do not open `index.html` directly as a file.
 
 ---
 

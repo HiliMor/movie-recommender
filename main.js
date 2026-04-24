@@ -134,47 +134,6 @@ async function fetchSimilarMovies() {
     }
 }
 
-async function fetchUserRecommendations() {
-    clearErr('err-user');
-    document.getElementById('results-user').innerHTML = '';
-
-    const userId = document.getElementById('user-id').value.trim();
-    const n = document.getElementById('n-user').value;
-    if (!userId) { showErr('err-user', 'Please enter a viewer ID.'); return; }
-
-    setLoading('load-user', true);
-    try {
-        const res = await fetch(`${API_BASE}/api/recommend/user/${userId}?n=${n}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Viewer not found.');
-        renderResults('results-user', data.recommendations);
-    } catch (e) {
-        showErr('err-user', e.message);
-    } finally {
-        setLoading('load-user', false);
-    }
-}
-
-// ── Sample user IDs ─────────────────────────────────────────
-async function loadSampleUsers() {
-    const hint = document.getElementById('sample-users-hint');
-    if (!hint) return;
-    try {
-        const res = await fetch(`${API_BASE}/api/users/sample`);
-        if (!res.ok) { hint.textContent = ''; return; }
-        const data = await res.json();
-        hint.innerHTML = 'Try: ' + data.user_ids
-            .map(id => `<button class="id-chip" data-id="${id}">${id}</button>`)
-            .join('');
-        hint.querySelectorAll('.id-chip').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('user-id').value = btn.dataset.id;
-            });
-        });
-    } catch {
-        hint.textContent = '';
-    }
-}
 
 // ── Movie title autocomplete ────────────────────────────────
 let _movieDebounce;
@@ -204,11 +163,6 @@ function initEnterKeys() {
             if (e.key === 'Enter') fetchSimilarMovies();
         });
     });
-    ['user-id', 'n-user'].forEach(id => {
-        document.getElementById(id).addEventListener('keydown', e => {
-            if (e.key === 'Enter') fetchUserRecommendations();
-        });
-    });
 }
 
 // ── Init ────────────────────────────────────────────────────
@@ -216,8 +170,6 @@ fillHoles('holes-top');
 fillHoles('holes-bottom');
 initTabs();
 initEnterKeys();
-loadSampleUsers();
 
 document.getElementById('btn-search').addEventListener('click', fetchSemanticSearch);
 document.getElementById('btn-movie').addEventListener('click', fetchSimilarMovies);
-document.getElementById('btn-user').addEventListener('click', fetchUserRecommendations);
