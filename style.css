@@ -87,6 +87,23 @@ h1 span {
     font-size: 1.02em;
 }
 
+.about-link {
+    display: inline-block;
+    margin-top: 18px;
+    font-size: 0.78em;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--dim);
+    padding-bottom: 1px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.about-link:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+}
+
 /* ── Main layout ── */
 main {
     max-width: 820px;

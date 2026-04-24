@@ -1,11 +1,8 @@
---extra-index-url https://download.pytorch.org/whl/cpu
 flask
 flask-cors
 gunicorn
 pandas
 numpy
 scikit-learn
-sentence-transformers
-torch
 requests
 python-dotenv

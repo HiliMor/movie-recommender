@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 import requests
@@ -29,7 +29,6 @@ def _cache_fresh(path):
     t = os.path.getmtime(path)
     return all(os.path.getmtime(s) <= t for s in _SOURCE_FILES)
 
-EMB_CACHE = os.path.join(CACHE_DIR, 'embeddings.npy')
 POP_CACHE = os.path.join(CACHE_DIR, 'popularity.npy')
 
 TMDB_TOKEN = os.getenv('TMDB_TOKEN')
@@ -95,25 +94,20 @@ else:
     np.save(POP_CACHE, popularity_scores)
     print("Popularity cache saved.")
 
-# ── Semantic embeddings ──────────────────────────────────────
-print("Loading embedding model...")
-embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+# ── TF-IDF search index ──────────────────────────────────────
+print("Building TF-IDF search index...")
 
 def movie_to_text(row):
     active_genres = [g.replace('_', ' ') for g in genre_columns if row[g] == 1]
-    genre_str = ', '.join(active_genres) if active_genres else 'unknown'
-    return f"{row['title']} — {genre_str}"
+    genre_str = ' '.join(active_genres) if active_genres else 'unknown'
+    title_clean = re.sub(r'\(\d{4}\)', '', row['title']).strip()
+    # Repeat genres to boost their weight relative to title words
+    return f"{title_clean} {genre_str} {genre_str}"
 
 movies['text'] = movies.apply(movie_to_text, axis=1)
-
-if _cache_fresh(EMB_CACHE):
-    print("Loading embeddings from cache...")
-    movie_embeddings = np.load(EMB_CACHE)
-    print(f"Embeddings loaded ({len(movie_embeddings)} movies).")
-else:
-    movie_embeddings = embed_model.encode(movies['text'].tolist(), show_progress_bar=True)
-    np.save(EMB_CACHE, movie_embeddings)
-    print("Embeddings saved to cache.")
+tfidf = TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True)
+tfidf_matrix = tfidf.fit_transform(movies['text'])
+print(f"TF-IDF index built ({tfidf_matrix.shape[0]} movies, {tfidf_matrix.shape[1]} terms).")
 
 # ── Recommender functions ────────────────────────────────────
 def get_genres(row):
@@ -136,8 +130,8 @@ def recommend_similar_movies(movie_title, n_recommendations=5):
             for row, tmdb, idx in zip(rows, tmdb_data, similar_movie_indices)]
 
 def semantic_search(query, n_recommendations=5):
-    query_embedding = embed_model.encode([query])
-    sem_scores = cosine_similarity(query_embedding, movie_embeddings)[0]
+    query_vec = tfidf.transform([query])
+    sem_scores = cosine_similarity(query_vec, tfidf_matrix).flatten()
     blended = 0.65 * sem_scores + 0.35 * popularity_scores
     top_indices = blended.argsort()[-n_recommendations:][::-1]
 

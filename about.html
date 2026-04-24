@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How it works — Picture House</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .about-main {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 56px 24px 80px;
+        }
+
+        .back-link {
+            display: inline-block;
+            font-size: 0.82em;
+            color: var(--muted);
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            margin-bottom: 48px;
+            transition: color 0.15s;
+        }
+
+        .back-link:hover {
+            color: var(--gold);
+        }
+
+        .about-main h2 {
+            font-size: 1.75em;
+            color: var(--cream);
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .about-main .subtitle {
+            font-size: 0.95em;
+            color: var(--muted);
+            font-style: italic;
+            margin-bottom: 52px;
+        }
+
+        .section {
+            margin-bottom: 48px;
+            padding-bottom: 48px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h3 {
+            font-size: 0.68em;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 16px;
+            opacity: 0.8;
+        }
+
+        .section p {
+            font-size: 0.97em;
+            color: var(--muted);
+            line-height: 1.85;
+            margin-bottom: 14px;
+        }
+
+        .section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section p strong {
+            color: var(--cream);
+            font-weight: normal;
+        }
+
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .stack-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+        }
+
+        .stack-item .stack-name {
+            font-size: 0.92em;
+            color: var(--cream);
+            margin-bottom: 4px;
+        }
+
+        .stack-item .stack-desc {
+            font-size: 0.78em;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .note {
+            background: rgba(201, 151, 74, 0.06);
+            border: 1px solid rgba(201, 151, 74, 0.18);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            margin-top: 20px;
+        }
+
+        .note p {
+            font-size: 0.88em;
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.75;
+        }
+
+        .note p strong {
+            color: var(--gold);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="filmstrip">
+        <div class="filmstrip-holes" id="holes-top"></div>
+    </div>
+
+    <header>
+        <p class="marquee-label">Behind the screen</p>
+        <h1>How it <span>works</span></h1>
+        <p class="tagline">The tech behind Picture House</p>
+    </header>
+
+    <main class="about-main">
+        <a href="/" class="back-link">← Back to Picture House</a>
+
+        <h2>Two ways to find a film</h2>
+        <p class="subtitle">Each tab uses a different technique under the hood.</p>
+
+        <div class="section">
+            <h3>Search — what are you looking for?</h3>
+            <p>
+                You describe what kind of film you want in plain words —
+                <em>"funny film for a rainy evening"</em> or <em>"intense spy thriller"</em>.
+                The app converts your query into a <strong>TF-IDF vector</strong>
+                (a numerical representation of which words appear and how important they are),
+                then finds the movies whose title and genre descriptions are closest to it
+                using <strong>cosine similarity</strong>.
+            </p>
+            <p>
+                The results also factor in <strong>popularity</strong>: a film with thousands of
+                ratings gets a small boost over an equally relevant but obscure title.
+                The final score is a blend — 65% relevance to your query,
+                35% how widely watched the film is.
+            </p>
+        </div>
+
+        <div class="section">
+            <h3>Similar films — more like this one</h3>
+            <p>
+                You enter a film you already like. The app looks up its genre combination
+                (e.g. Action + Sci-Fi + Thriller) and computes
+                <strong>cosine similarity</strong> against every other film's genre vector.
+                Films that share the most genres rank highest.
+            </p>
+            <p>
+                This is called <strong>content-based filtering</strong> — it recommends
+                based on the properties of the film itself, not on what other users watched.
+            </p>
+        </div>
+
+        <div class="section">
+            <h3>The dataset</h3>
+            <p>
+                Movie data comes from <strong>MovieLens 25M</strong>, a public dataset
+                released by GroupLens Research at the University of Minnesota.
+                It contains 25 million ratings across 62,000 films.
+                The app uses a filtered subset — films with enough ratings to be meaningful —
+                along with genre metadata.
+            </p>
+            <p>
+                Posters, overviews, and TMDB ratings are fetched live from the
+                <strong>TMDB API</strong> (The Movie Database) and cached in memory
+                for the duration of each server session.
+            </p>
+        </div>
+
+        <div class="section">
+            <h3>Tech stack</h3>
+            <div class="stack-grid">
+                <div class="stack-item">
+                    <div class="stack-name">Python · Flask</div>
+                    <div class="stack-desc">Backend API and static file serving</div>
+                </div>
+                <div class="stack-item">
+                    <div class="stack-name">scikit-learn</div>
+                    <div class="stack-desc">TF-IDF vectoriser and cosine similarity</div>
+                </div>
+                <div class="stack-item">
+                    <div class="stack-name">pandas · numpy</div>
+                    <div class="stack-desc">Data loading and matrix operations</div>
+                </div>
+                <div class="stack-item">
+                    <div class="stack-name">TMDB API</div>
+                    <div class="stack-desc">Posters, overviews, and ratings</div>
+                </div>
+                <div class="stack-item">
+                    <div class="stack-name">Gunicorn</div>
+                    <div class="stack-desc">WSGI server for production</div>
+                </div>
+                <div class="stack-item">
+                    <div class="stack-name">Railway</div>
+                    <div class="stack-desc">Cloud deployment platform</div>
+                </div>
+            </div>
+
+            <div class="note">
+                <p>
+                    <strong>Why TF-IDF instead of sentence embeddings?</strong><br>
+                    An earlier version used <em>all-MiniLM-L6-v2</em> via the
+                    sentence-transformers library for semantic search.
+                    Loading PyTorch and the transformer model required ~400 MB of RAM —
+                    more than the free tier allows. TF-IDF achieves comparable results
+                    for genre and title matching at a fraction of the memory footprint,
+                    with no GPU or heavy dependencies required.
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <div class="filmstrip">
+            <div class="filmstrip-holes" id="holes-bottom"></div>
+        </div>
+        <p>MovieLens 25M &mdash; genre similarity &amp; TF-IDF search</p>
+    </footer>
+
+    <script>
+        function fillHoles(containerId) {
+            const el = document.getElementById(containerId);
+            const count = Math.ceil(window.innerWidth / 28) + 4;
+            el.innerHTML = Array(count).fill('<div class="hole"></div>').join('');
+        }
+        fillHoles('holes-top');
+        fillHoles('holes-bottom');
+    </script>
+</body>
+</html>
