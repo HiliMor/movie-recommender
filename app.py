@@ -78,8 +78,7 @@ if '(no genres listed)' in genre_dummies.columns:
     genre_dummies = genre_dummies.drop(columns=['(no genres listed)'])
 genre_columns = genre_dummies.columns.tolist()
 movies = pd.concat([movies, genre_dummies], axis=1)
-genre_matrix = movies[genre_columns].values
-similarity_matrix = cosine_similarity(genre_matrix)
+genre_matrix = movies[genre_columns].values.astype('float32')
 
 # ── Popularity scores ────────────────────────────────────────
 if _cache_fresh(POP_CACHE):
@@ -119,7 +118,8 @@ def recommend_similar_movies(movie_title, n_recommendations=5):
     except IndexError:
         return None
 
-    similarity_scores = similarity_matrix[movie_idx]
+    movie_vec = genre_matrix[movie_idx].reshape(1, -1)
+    similarity_scores = cosine_similarity(movie_vec, genre_matrix)[0]
     similar_movie_indices = similarity_scores.argsort()[-n_recommendations-2:-2][::-1]
 
     rows = [movies.iloc[idx] for idx in similar_movie_indices]
