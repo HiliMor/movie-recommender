@@ -18,3 +18,7 @@ ml-25m/
 
 # claude
 .claude
+
+# Raw dataset files (too large for git — generate filtered versions locally)
+ml-25m/ratings.csv
+ml-25m/ratings_filtered.csv

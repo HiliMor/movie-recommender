@@ -15,7 +15,7 @@
     <header>
         <p class="marquee-label">Now showing</p>
         <h1>Picture <span>House</span></h1>
-        <p class="tagline">A recommendation engine for the discerning viewer</p>
+        <p class="tagline">Find your next favourite film</p>
     </header>
 
     <main>
@@ -28,7 +28,7 @@
         <!-- Tab 0: semantic search -->
         <div id="by-search" class="tab-panel active">
             <p class="section-intro">
-                Describe what you're in the mood for. Plain English — no need for exact titles.
+                Tell us what kind of film you're after — in your own words. Something like <em>"funny film for a rainy evening"</em> or <em>"intense spy thriller"</em>. No need to know a specific title.
             </p>
 
             <div class="msg error" id="err-search"></div>
@@ -53,14 +53,15 @@
         <!-- Tab 1: by movie -->
         <div id="by-movie" class="tab-panel">
             <p class="section-intro">
-                Enter a title and we'll surface films with matching genre profiles from the catalogue.
+                Already enjoyed a film and want more like it? Enter its title and we'll find movies that share the same genres. Start typing and select from the suggestions.
             </p>
 
             <div class="msg error" id="err-movie"></div>
 
             <div class="field">
                 <label for="movie-title">Film title</label>
-                <input type="text" id="movie-title" placeholder="e.g. Star Wars (1977)">
+                <input type="text" id="movie-title" list="movie-suggestions" placeholder="e.g. Star Wars: Episode IV - A New Hope (1977)" autocomplete="off">
+                <datalist id="movie-suggestions"></datalist>
             </div>
 
             <div class="field">
@@ -78,14 +79,15 @@
         <!-- Tab 2: by user -->
         <div id="by-user" class="tab-panel">
             <p class="section-intro">
-                Enter a viewer ID (1–943) and we'll recommend films based on the tastes of similar viewers.
+                Enter a viewer ID from the MovieLens dataset and we'll recommend films based on what similar viewers rated highly — films you haven't seen but are likely to enjoy. Use one of the example IDs below to try it out.
             </p>
 
             <div class="msg error" id="err-user"></div>
 
             <div class="field">
                 <label for="user-id">Viewer ID</label>
-                <input type="number" id="user-id" placeholder="e.g. 42" min="1" max="943">
+                <input type="number" id="user-id" placeholder="e.g. 72315" min="1" max="162541">
+                <p class="field-hint" id="sample-users-hint">Loading example IDs&hellip;</p>
             </div>
 
             <div class="field">

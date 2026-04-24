@@ -2,33 +2,29 @@
 
 A machine learning recommendation system built from scratch as a learning project. Covers content-based filtering, collaborative filtering with SVD, semantic search with HuggingFace embeddings, and a TMDB-enriched frontend.
 
-## How it works
+## The three ways to find a film
 
-### 1. Similar films (content-based)
+### Search — describe what you want
 
-Given a movie title, finds films with overlapping genres using cosine similarity on genre vectors.
+Type a description in plain English, like *"funny film for a rainy evening"* or *"intense spy thriller"*. No need to know a specific title.
 
-Each movie is represented as a binary vector across 19 genre flags. Cosine similarity measures the angle between two vectors — small angle means similar genres, regardless of how many genres each film has.
+Under the hood it uses a sentence embedding model (`all-MiniLM-L6-v2`) to turn your description and every film in the catalogue into a numeric vector that encodes meaning. The closest matches are returned. Results are blended with a popularity signal so well-known films surface ahead of obscure ones for broad queries.
 
-### 2. For a viewer (collaborative filtering — SVD)
+### Similar Films — start from a title you know
 
-Given a user ID, predicts ratings for every movie the user hasn't seen and returns the highest-predicted ones.
+Already enjoyed a film and want more like it? Type its title (autocomplete will help), and the engine finds movies that share the same genre profile.
 
-Uses **Truncated SVD** (matrix factorization) on the 943×1682 user-movie ratings matrix. SVD decomposes the matrix into latent factors — hidden "taste dimensions" like affinity for slow dramas or action films — without you ever labeling them. Reconstructing the matrix fills in the blanks with predicted ratings.
+Each film is represented as a binary vector of 19 genre flags (Action, Comedy, Drama…). Similarity is measured by the angle between vectors — films with heavily overlapping genres come out on top.
 
-This replaces the earlier nearest-neighbor approach, which only looked at who rated what. SVD considers how much users rated things and finds deeper patterns across all 100,000 ratings at once.
+### For a Viewer — personalised picks by user ID
 
-### 3. Search (semantic search — HuggingFace)
+Enter a viewer ID from the MovieLens dataset to get recommendations tailored to that person's taste. The engine looks at the ratings of thousands of similar viewers and predicts which unseen films that user would rate most highly.
 
-Takes a plain English description like *"dark psychological thriller"* or *"funny film for kids"* and returns the closest matching movies.
+This uses SVD (matrix factorisation) on a 2,560 active users × 13,000 movies ratings matrix. SVD finds hidden "taste dimensions" — patterns like *affinity for slow dramas* or *preference for action* — without them ever being labelled. Reconstructing the matrix fills in predicted ratings for every film a user hasn't seen.
 
-Uses `all-MiniLM-L6-v2` from HuggingFace, a sentence transformer model trained on over 1 billion text pairs. It maps any text to a 384-dimensional vector (an "embedding") that encodes meaning. At startup, all 1682 movies are embedded once. At query time, the query is embedded with the same model, and cosine similarity finds the nearest movies in that 384-dimensional space.
+### TMDB enrichment
 
-Because it measures angle (not distance), a short query like *"war drama"* and a long one like *"an intense emotional film set during a conflict with a focus on human suffering"* land in roughly the same place.
-
-### 4. TMDB enrichment
-
-Every recommendation is enriched with poster, overview, and rating from the TMDB API. Movie titles are parsed from the MovieLens format (`"Star Wars (1977)"`) into title + year, searched against TMDB, and the first result is used.
+Every result is enriched with a poster, overview, and rating from the TMDB API. Movie titles are parsed from the MovieLens format (`"Star Wars (1977)"`) into title + year, then looked up on TMDB.
 
 ---
 
