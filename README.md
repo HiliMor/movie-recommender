@@ -1,121 +1,24 @@
-# Movie Recommender System
+# Picture House — Movie Recommender
 
-A machine learning recommendation system built from scratch as a learning project. Covers content-based filtering, collaborative filtering with SVD, semantic search with HuggingFace embeddings, and a TMDB-enriched frontend.
+A movie recommendation system built from scratch using the MovieLens 25M dataset. Deployed at [movie-recommendations.up.railway.app](https://movie-recommendations.up.railway.app).
 
-## The three ways to find a film
+---
+
+## Features
 
 ### Search — describe what you want
+Type a description in plain English: *"funny film for a rainy evening"* or *"intense spy thriller"*. No need to know a specific title.
 
-Type a description in plain English, like *"funny film for a rainy evening"* or *"intense spy thriller"*. No need to know a specific title.
+Uses **TF-IDF** with synonym expansion to match your description against movie titles and genres. Results are blended with a popularity signal (65% relevance, 35% popularity) so well-known films surface ahead of obscure ones for broad queries.
 
-Under the hood it uses a sentence embedding model (`all-MiniLM-L6-v2`) to turn your description and every film in the catalogue into a numeric vector that encodes meaning. The closest matches are returned. Results are blended with a popularity signal so well-known films surface ahead of obscure ones for broad queries.
+### Similar films — start from a title you know
+Enter a film you enjoyed and the engine finds the most similar films using three signals blended together:
 
-### Similar Films — start from a title you know
-
-Already enjoyed a film and want more like it? Type its title (autocomplete will help), and the engine finds movies that share the same genre profile.
-
-Each film is represented as a binary vector of 19 genre flags (Action, Comedy, Drama…). Similarity is measured by the angle between vectors — films with heavily overlapping genres come out on top.
-
-### For a Viewer — personalised picks by user ID
-
-Enter a viewer ID from the MovieLens dataset to get recommendations tailored to that person's taste. The engine looks at the ratings of thousands of similar viewers and predicts which unseen films that user would rate most highly.
-
-This uses SVD (matrix factorisation) on a 2,560 active users × 13,000 movies ratings matrix. SVD finds hidden "taste dimensions" — patterns like *affinity for slow dramas* or *preference for action* — without them ever being labelled. Reconstructing the matrix fills in predicted ratings for every film a user hasn't seen.
-
-### TMDB enrichment
-
-Every result is enriched with a poster, overview, and rating from the TMDB API. Movie titles are parsed from the MovieLens format (`"Star Wars (1977)"`) into title + year, then looked up on TMDB.
-
----
-
-## Project structure
-
-```
-movie-recommender/
-├── app.py                        # Flask API — models, endpoints
-├── index.html                    # Frontend
-├── style.css                     # Styles
-├── main.js                       # Frontend logic
-├── 01_load_explore_data.ipynb    # ML-100K data exploration
-├── 02_explore_25m.ipynb          # ML-25M exploration and filtering
-├── ml-25m/                       # MovieLens 25M dataset (not in git)
-├── .env                          # TMDB API token (not in git)
-├── venv/                         # Python virtual environment (not in git)
-└── README.md
-```
-
----
-
-## Setup
-
-### 1. Get the dataset
-
-Download [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/) and place the `ml-100k/` folder in the project root.
-
-### 2. Get a TMDB API token
-
-Create a free account at [themoviedb.org](https://www.themoviedb.org), go to Settings → API, and copy the **API Read Access Token**.
-
-Create a `.env` file:
-
-```
-TMDB_TOKEN=your_token_here
-```
-
-### 3. Install dependencies
-
-```bash
-source venv/bin/activate
-pip install pandas numpy scikit-learn flask flask-cors requests python-dotenv sentence-transformers torch transformers jupyter
-```
-
-### 4. Run the app
-
-```bash
-python app.py
-```
-
-The server starts at `http://localhost:8000`. Open that URL in your browser — do not open `index.html` directly as a file.
-
----
-
-## API endpoints
-
-### Health check
-```
-GET /api/health
-```
-
-### Similar films
-```
-GET /api/movies/Toy%20Story%20(1995)?n=5
-```
-
-### User recommendations
-```
-GET /api/recommend/user/42?n=5
-```
-
-### Semantic search
-```
-GET /api/search?q=funny+movie+for+kids&n=5
-```
-
-All recommendation responses include `title`, a score field, `poster`, `overview`, and `tmdb_rating`.
-
----
-
-## Data
-
-**MovieLens 25M** — 25 million ratings from 162,000 users on 62,000 movies, collected up to 2019. Ratings on a 0.5–5 scale, 19 genre categories.
-
-For performance, the app filters to:
-- Movies with 50+ ratings — 13,176 movies
-- Users with 1,000+ ratings for SVD — 2,560 most active users
-
-This keeps the recommendation quality high (more signal, less noise) while keeping the SVD matrix at a manageable size (~33M cells vs 1.3B unfiltered).
-
-The full exploration and filtering process is documented in `02_explore_25m.ipynb`.
+| Signal | Weight | What it captures |
+|---|---|---|
+| **Genome tags** | 50% | 1,128 crowd-sourced descriptors per film (*"feel-good"*, *"thought-provoking"*, *"plot twist"*) compressed to 100 dimensions with SVD |
+| **Collaborative filtering** | 35% | Films that the same audiences rate similarly — SVD on a sparse 160k users × 13k movies ratings matrix |
+| **Genre overlap** | 15% | Binary genre vector (Action, Comedy, Drama…) as a tie-breaker |
 
 ---
 
@@ -123,41 +26,114 @@ The full exploration and filtering process is documented in `02_explore_25m.ipyn
 
 | Layer | Technology |
 |---|---|
-| Language | Python 3.12 |
-| Data | Pandas, NumPy |
-| ML | Scikit-learn (SVD, cosine similarity) |
-| Embeddings | sentence-transformers, HuggingFace `all-MiniLM-L6-v2` |
-| API | Flask, Flask-CORS |
-| Movie data | TMDB API |
+| Language | Python 3 |
+| Data | Pandas, NumPy, SciPy |
+| ML | scikit-learn — TF-IDF, TruncatedSVD, cosine similarity |
+| API | Flask, Flask-CORS, Gunicorn |
+| Movie enrichment | TMDB API (posters, overviews, ratings) |
 | Frontend | HTML, CSS, vanilla JS |
-| Notebook | Jupyter |
+| Deployment | Railway |
+
+---
+
+## Project structure
+
+```
+movie-recommender/
+├── app.py               # Flask API and recommendation logic
+├── precompute.py        # One-time script to build genome + CF factors
+├── index.html           # Frontend
+├── about.html           # How it works page
+├── style.css
+├── main.js
+├── requirements.txt
+├── ml-25m/              # MovieLens 25M dataset (not in git — large files)
+│   └── movies_filtered.csv   # committed — filtered movie list
+├── .cache/              # Precomputed numpy arrays (committed)
+│   ├── popularity.npy
+│   ├── genome_factors.npy
+│   ├── genome_mask.npy
+│   └── cf_item_factors.npy
+└── .env                 # TMDB API token (not in git)
+```
+
+---
+
+## Local setup
+
+### 1. Get the dataset
+
+Download [MovieLens 25M](https://grouplens.org/datasets/movielens/25m/) and place the contents in `ml-25m/`.
+
+### 2. Get a TMDB API token
+
+Create a free account at [themoviedb.org](https://www.themoviedb.org), go to Settings → API, and copy the **API Read Access Token**.
+
+Create a `.env` file:
+```
+TMDB_TOKEN=your_token_here
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Precompute factors (first time only)
+
+```bash
+python precompute.py
+```
+
+This reads `genome-scores.csv` and `ratings_filtered.csv` (large files, not in git) and saves small precomputed numpy arrays to `.cache/`. Takes about 2 minutes.
+
+### 5. Run
+
+```bash
+python app.py
+```
+
+Open `http://localhost:8000` — do not open `index.html` directly as a file.
+
+---
+
+## API
+
+```
+GET /api/search?q=funny+spy+thriller&n=5
+GET /api/movies/Toy%20Story%20(1995)?n=5
+GET /api/movies/autocomplete?q=toy
+GET /api/health
+```
+
+All recommendation responses include `title`, `similarity_score`, `genres`, `poster`, `overview`, and `tmdb_rating`.
+
+---
+
+## Data
+
+**MovieLens 25M** — 25 million ratings from 162,000 users on 62,000 movies. Filtered to movies with 50+ ratings → 13,176 movies.
+
+**MovieLens Genome** — 1,128 crowd-sourced relevance tags per film, scored 0–1. Compressed from 1,128 → 100 dimensions with SVD before use.
 
 ---
 
 ## What I learned building this
 
-This project was built step by step, each piece introducing a new concept.
-
-**Machine learning concepts**
-- What cosine similarity actually measures — angle between vectors, not distance — and why that matters for text
-- Content-based filtering: representing movies as genre vectors and finding nearest neighbors
-- Collaborative filtering: why nearest-neighbor is limited and how SVD fixes it by finding latent patterns across the entire dataset
-- Matrix factorization: decomposing a users × movies matrix into hidden "taste dimensions"
-- Embeddings: how a neural network maps text into a vector space where meaning determines position
-- The difference between genre-based similarity (what a movie *is*) and semantic similarity (what a movie *feels like*)
+**Recommendation techniques**
+- Content-based filtering: representing movies as genre vectors and finding nearest neighbours with cosine similarity
+- Collaborative filtering: SVD on a sparse user–item matrix to find latent taste dimensions — the same principle behind Netflix and Spotify
+- Hybrid recommenders: combining multiple signals with weighted blending
+- Why genre-only similarity is limited and how genome tags and CF complement it
 
 **Working with data**
-- Loading and exploring datasets with Pandas
-- Building and manipulating matrices with NumPy
-- What the MovieLens dataset looks like and how ratings data is structured
+- Building sparse matrices from ratings data with SciPy
+- Dimensionality reduction with Truncated SVD
+- TF-IDF vectorisation and query expansion for text search
 
-**APIs and external services**
-- How REST APIs work — making HTTP requests, reading JSON responses
-- Authentication with Bearer tokens vs API keys
-- Integrating the TMDB API to enrich recommendations with posters and descriptions
-- Loading a pre-trained model from HuggingFace in one line and using it immediately
-
-**Software structure**
-- Separating a project into HTML / CSS / JS — one responsibility per file
-- Building a Flask backend and connecting it to a frontend via fetch calls
-- Keeping secrets out of code with `.env` files and `.gitignore`
+**Engineering**
+- Keeping memory low enough for a free-tier deployment (replaced PyTorch sentence-transformers with TF-IDF, compute similarity on-demand instead of precomputing N×N matrices)
+- Pre-computing expensive factors locally and committing the small output files
+- Flask serving both API and static frontend from a single service
+- Deploying on Railway with Gunicorn
