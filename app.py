@@ -116,6 +116,41 @@ tfidf = TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True)
 tfidf_matrix = tfidf.fit_transform(movies['text'])
 print(f"TF-IDF index built ({tfidf_matrix.shape[0]} movies, {tfidf_matrix.shape[1]} terms).")
 
+# ── Query synonym expansion ──────────────────────────────────
+_SYNONYMS = {
+    'funny': 'comedy', 'hilarious': 'comedy', 'humorous': 'comedy', 'humor': 'comedy',
+    'laugh': 'comedy', 'lighthearted': 'comedy', 'feel good': 'comedy drama',
+    'feel-good': 'comedy drama', 'cozy': 'comedy drama romance', 'rainy': 'comedy drama',
+    'scary': 'horror', 'frightening': 'horror', 'spooky': 'horror', 'creepy': 'horror',
+    'romantic': 'romance', 'love story': 'romance', 'date night': 'romance comedy',
+    'thrilling': 'thriller', 'suspenseful': 'thriller', 'suspense': 'thriller',
+    'tense': 'thriller', 'intense': 'thriller drama',
+    'action-packed': 'action', 'explosive': 'action',
+    'animated': 'animation', 'cartoon': 'animation',
+    'kids': 'animation children', 'children': 'children animation',
+    'family': 'children comedy', 'family friendly': 'children comedy animation',
+    'science fiction': 'sci-fi', 'scifi': 'sci-fi', 'futuristic': 'sci-fi',
+    'space': 'sci-fi adventure', 'dystopian': 'sci-fi drama',
+    'documentary': 'documentary', 'doc': 'documentary', 'true story': 'documentary drama',
+    'historical': 'history drama', 'period': 'drama history',
+    'mystery': 'mystery thriller', 'whodunit': 'mystery crime',
+    'dark': 'crime thriller drama', 'gritty': 'crime drama',
+    'war': 'war drama', 'combat': 'war action',
+    'adventure': 'adventure action', 'epic': 'adventure drama',
+    'musical': 'musical', 'music': 'musical',
+    'western': 'western', 'cowboy': 'western',
+}
+
+def expand_query(query):
+    q = query.lower()
+    extra = []
+    for phrase, genres in _SYNONYMS.items():
+        if phrase in q:
+            extra.append(genres)
+    if extra:
+        return query + ' ' + ' '.join(extra)
+    return query
+
 # ── Recommender functions ────────────────────────────────────
 def get_genres(row):
     return [g for g in genre_columns if row[g] == 1]
@@ -138,7 +173,8 @@ def recommend_similar_movies(movie_title, n_recommendations=5):
             for row, tmdb, idx in zip(rows, tmdb_data, similar_movie_indices)]
 
 def semantic_search(query, n_recommendations=5):
-    query_vec = tfidf.transform([query])
+    expanded = expand_query(query)
+    query_vec = tfidf.transform([expanded])
     sem_scores = cosine_similarity(query_vec, tfidf_matrix).flatten()
     blended = 0.65 * sem_scores + 0.35 * popularity_scores
     top_indices = blended.argsort()[-n_recommendations:][::-1]
@@ -146,7 +182,7 @@ def semantic_search(query, n_recommendations=5):
     rows = [movies.iloc[idx] for idx in top_indices]
     tmdb_data = fetch_tmdb_batch([row['title'] for row in rows])
 
-    return [{'title': row['title'], 'similarity_score': float(sem_scores[idx]),
+    return [{'title': row['title'], 'similarity_score': float(blended[idx]),
              'genres': get_genres(row), **tmdb}
             for row, tmdb, idx in zip(rows, tmdb_data, top_indices)]
 
