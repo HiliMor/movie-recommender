@@ -28,53 +28,63 @@
 
         <!-- Tab 0: semantic search -->
         <div id="by-search" class="tab-panel active">
-            <p class="section-intro">
-                Tell us what kind of film you're after — in your own words. Something like <em>"funny film for a rainy evening"</em> or <em>"intense spy thriller"</em>. No need to know a specific title.
-            </p>
+            <div class="panel-layout">
+                <div class="panel-form">
+                    <p class="section-intro">
+                        Tell us what kind of film you're after — in your own words. Something like <em>"funny film for a rainy evening"</em> or <em>"intense spy thriller"</em>. No need to know a specific title.
+                    </p>
 
-            <div class="msg error" id="err-search"></div>
+                    <div class="msg error" id="err-search"></div>
 
-            <div class="field">
-                <label for="search-query">What are you looking for?</label>
-                <input type="text" id="search-query" placeholder="e.g. dark psychological thriller, funny film for kids">
+                    <div class="field">
+                        <label for="search-query">What are you looking for?</label>
+                        <input type="text" id="search-query" placeholder="e.g. dark psychological thriller, funny film for kids">
+                    </div>
+
+                    <div class="field">
+                        <label for="n-search">How many results</label>
+                        <input type="number" id="n-search" value="5" min="1" max="20">
+                    </div>
+
+                    <button class="submit-btn" id="btn-search">Find films</button>
+
+                    <p class="msg loading" id="load-search">Searching...</p>
+                </div>
+                <div class="panel-results">
+                    <div class="results" id="results-search"></div>
+                </div>
             </div>
-
-            <div class="field">
-                <label for="n-search">How many results</label>
-                <input type="number" id="n-search" value="5" min="1" max="20">
-            </div>
-
-            <button class="submit-btn" id="btn-search">Find films</button>
-
-            <p class="msg loading" id="load-search">Searching...</p>
-
-            <div class="results" id="results-search"></div>
         </div>
 
         <!-- Tab 1: by movie -->
         <div id="by-movie" class="tab-panel">
-            <p class="section-intro">
-                Already enjoyed a film and want more like it? Enter its title and we'll find movies that share the same genres. Start typing and select from the suggestions.
-            </p>
+            <div class="panel-layout">
+                <div class="panel-form">
+                    <p class="section-intro">
+                        Already enjoyed a film and want more like it? Enter its title and we'll find movies that share the same genres. Start typing and select from the suggestions.
+                    </p>
 
-            <div class="msg error" id="err-movie"></div>
+                    <div class="msg error" id="err-movie"></div>
 
-            <div class="field">
-                <label for="movie-title">Film title</label>
-                <input type="text" id="movie-title" list="movie-suggestions" placeholder="e.g. Star Wars: Episode IV - A New Hope (1977)" autocomplete="off">
-                <datalist id="movie-suggestions"></datalist>
+                    <div class="field">
+                        <label for="movie-title">Film title</label>
+                        <input type="text" id="movie-title" list="movie-suggestions" placeholder="e.g. Star Wars: Episode IV - A New Hope (1977)" autocomplete="off">
+                        <datalist id="movie-suggestions"></datalist>
+                    </div>
+
+                    <div class="field">
+                        <label for="n-movie">How many results</label>
+                        <input type="number" id="n-movie" value="5" min="1" max="20">
+                    </div>
+
+                    <button class="submit-btn" id="btn-movie">Find similar films</button>
+
+                    <p class="msg loading" id="load-movie">Searching catalogue...</p>
+                </div>
+                <div class="panel-results">
+                    <div class="results" id="results-movie"></div>
+                </div>
             </div>
-
-            <div class="field">
-                <label for="n-movie">How many results</label>
-                <input type="number" id="n-movie" value="5" min="1" max="20">
-            </div>
-
-            <button class="submit-btn" id="btn-movie">Find similar films</button>
-
-            <p class="msg loading" id="load-movie">Searching catalogue...</p>
-
-            <div class="results" id="results-movie"></div>
         </div>
 
     </main>
