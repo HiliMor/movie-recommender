@@ -151,6 +151,27 @@ def expand_query(query):
         return query + ' ' + ' '.join(extra)
     return query
 
+# ── Genome + CF factors ──────────────────────────────────────
+_GENOME_FACTORS = os.path.join(CACHE_DIR, 'genome_factors.npy')
+_GENOME_MASK    = os.path.join(CACHE_DIR, 'genome_mask.npy')
+_CF_FACTORS     = os.path.join(CACHE_DIR, 'cf_item_factors.npy')
+
+if os.path.exists(_GENOME_FACTORS) and os.path.exists(_GENOME_MASK):
+    genome_factors = np.load(_GENOME_FACTORS)
+    genome_mask    = np.load(_GENOME_MASK)
+    print(f"Genome factors loaded ({genome_mask.sum()} movies).")
+else:
+    genome_factors = None
+    genome_mask    = None
+    print("No genome factors — using genre-only similarity.")
+
+if os.path.exists(_CF_FACTORS):
+    cf_item_factors = np.load(_CF_FACTORS)
+    print(f"CF item factors loaded {cf_item_factors.shape}.")
+else:
+    cf_item_factors = None
+    print("No CF factors — collaborative filtering disabled.")
+
 # ── Recommender functions ────────────────────────────────────
 def get_genres(row):
     return [g for g in genre_columns if row[g] == 1]
@@ -161,16 +182,42 @@ def recommend_similar_movies(movie_title, n_recommendations=5):
     except IndexError:
         return None
 
-    movie_vec = genre_matrix[movie_idx].reshape(1, -1)
-    similarity_scores = cosine_similarity(movie_vec, genre_matrix)[0]
-    similar_movie_indices = similarity_scores.argsort()[-n_recommendations-2:-2][::-1]
+    # Genre similarity (always available)
+    genre_sim = cosine_similarity(genre_matrix[movie_idx].reshape(1, -1), genre_matrix)[0]
 
-    rows = [movies.iloc[idx] for idx in similar_movie_indices]
+    # Genome similarity
+    has_genome = genome_factors is not None and genome_mask[movie_idx]
+    if has_genome:
+        genome_sim = cosine_similarity(genome_factors[movie_idx].reshape(1, -1), genome_factors)[0]
+        genome_sim[~genome_mask] = 0
+    else:
+        genome_sim = None
+
+    # Collaborative filtering similarity
+    if cf_item_factors is not None:
+        cf_sim = cosine_similarity(cf_item_factors[movie_idx].reshape(1, -1), cf_item_factors)[0]
+    else:
+        cf_sim = None
+
+    # Hybrid blend
+    if genome_sim is not None and cf_sim is not None:
+        scores = 0.15 * genre_sim + 0.50 * genome_sim + 0.35 * cf_sim
+    elif genome_sim is not None:
+        scores = 0.25 * genre_sim + 0.75 * genome_sim
+    elif cf_sim is not None:
+        scores = 0.30 * genre_sim + 0.70 * cf_sim
+    else:
+        scores = genre_sim
+
+    scores[movie_idx] = -1  # exclude self
+    top_indices = scores.argsort()[-n_recommendations:][::-1]
+
+    rows = [movies.iloc[idx] for idx in top_indices]
     tmdb_data = fetch_tmdb_batch([row['title'] for row in rows])
 
-    return [{'title': row['title'], 'similarity_score': float(similarity_scores[idx]),
+    return [{'title': row['title'], 'similarity_score': float(scores[idx]),
              'genres': get_genres(row), **tmdb}
-            for row, tmdb, idx in zip(rows, tmdb_data, similar_movie_indices)]
+            for row, tmdb, idx in zip(rows, tmdb_data, top_indices)]
 
 def semantic_search(query, n_recommendations=5):
     expanded = expand_query(query)

@@ -4,5 +4,6 @@ gunicorn
 pandas
 numpy
 scikit-learn
+scipy
 requests
 python-dotenv

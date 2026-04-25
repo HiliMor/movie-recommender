@@ -26,3 +26,6 @@ ml-25m/README.txt
 .claude
 .cache/*
 !.cache/popularity.npy
+!.cache/genome_factors.npy
+!.cache/genome_mask.npy
+!.cache/cf_item_factors.npy

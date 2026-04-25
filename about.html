@@ -162,26 +162,29 @@
         <div class="section">
             <h3>Similar films — more like this one</h3>
             <p>
-                You enter a film you already like. The app looks up its genre combination
-                (e.g. Action + Sci-Fi + Thriller) and computes
-                <strong>cosine similarity</strong> against every other film's genre vector.
-                Films that share the most genres rank highest.
+                You enter a film you already like. The app computes similarity using
+                three signals blended together:
             </p>
             <p>
-                This is called <strong>content-based filtering</strong> — it recommends
-                based on the properties of the film itself, not on what other users watched.
+                <strong>Genome tags (50%)</strong> — MovieLens includes 1,128 crowd-sourced
+                relevance tags per film: descriptors like <em>"feel-good"</em>,
+                <em>"thought-provoking"</em>, <em>"plot twist"</em>, or <em>"atmospheric"</em>.
+                Each film gets a score (0–1) for every tag. These 1,128-dimensional vectors
+                are compressed to 100 dimensions with <strong>SVD</strong> before computing
+                cosine similarity — capturing nuanced taste rather than just broad genre.
             </p>
-            <div class="note">
-                <p>
-                    <strong>Current limitation:</strong> similarity is based on genres only.
-                    Two films can share the same genres but feel completely different in tone,
-                    style, or era. A future improvement would incorporate
-                    <strong>MovieLens genome tags</strong> — 1,128 crowd-sourced descriptors
-                    per film (e.g. <em>"feel-good"</em>, <em>"thought-provoking"</em>,
-                    <em>"plot twist"</em>) — which would make recommendations significantly
-                    more nuanced.
-                </p>
-            </div>
+            <p>
+                <strong>Collaborative filtering (35%)</strong> — based on the ratings of
+                25 million users. Films that the same audiences tend to rate similarly
+                end up close together in the latent space. This is the same principle
+                behind Netflix and Spotify recommendations. Technically: a sparse
+                user–item matrix is decomposed with <strong>Truncated SVD</strong>,
+                and the resulting item factors are used for cosine similarity.
+            </p>
+            <p>
+                <strong>Genre overlap (15%)</strong> — a lightweight genre vector
+                (e.g. Action + Sci-Fi + Thriller) as a tie-breaker.
+            </p>
         </div>
 
         <div class="section">
@@ -209,7 +212,7 @@
                 </div>
                 <div class="stack-item">
                     <div class="stack-name">scikit-learn</div>
-                    <div class="stack-desc">TF-IDF vectoriser and cosine similarity</div>
+                    <div class="stack-desc">TF-IDF, SVD, cosine similarity</div>
                 </div>
                 <div class="stack-item">
                     <div class="stack-name">pandas · numpy</div>
