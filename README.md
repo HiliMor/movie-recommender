@@ -2,6 +2,8 @@
 
 A movie recommendation system built from scratch using the MovieLens 25M dataset. Deployed at [movie-recommendations.up.railway.app](https://movie-recommendations.up.railway.app).
 
+![Demo](demo/demo.gif)
+
 ---
 
 ## Features
