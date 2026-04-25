@@ -406,40 +406,33 @@ input[type="number"] {
 
 /* ── Two-column panel layout (desktop) ── */
 .panel-layout {
-    display: flex;
-    gap: 48px;
-    align-items: flex-start;
-}
-
-.panel-form {
-    flex: 0 0 320px;
-    position: sticky;
-    top: 24px;
-}
-
-.panel-results {
-    flex: 1;
-    min-width: 0;
+    display: block;
 }
 
 .panel-results .results {
-    margin-top: 0;
+    margin-top: 44px;
 }
 
-@media (max-width: 720px) {
-    .panel-layout {
-        flex-direction: column;
-        gap: 0;
+@media (min-width: 721px) {
+    .panel-layout.has-results {
+        display: flex;
+        gap: 48px;
+        align-items: flex-start;
     }
 
-    .panel-form {
-        flex: none;
-        position: static;
-        width: 100%;
+    .panel-layout.has-results .panel-form {
+        flex: 0 0 320px;
+        position: sticky;
+        top: 24px;
     }
 
-    .panel-results .results {
-        margin-top: 44px;
+    .panel-layout.has-results .panel-results {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .panel-layout.has-results .panel-results .results {
+        margin-top: 0;
     }
 }
 

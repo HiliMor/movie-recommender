@@ -49,10 +49,13 @@ function setLoading(id, on) {
 // ── Results renderer ────────────────────────────────────────
 function renderResults(containerId, items) {
     const el = document.getElementById(containerId);
+    const layout = el.closest('.panel-layout');
     if (!items || items.length === 0) {
         el.innerHTML = '<p class="msg error" style="display:block">No results found.</p>';
+        if (layout) layout.classList.remove('has-results');
         return;
     }
+    if (layout) layout.classList.add('has-results');
 
     const cards = items.map((item, i) => {
         const score = item.similarity_score !== undefined
@@ -94,7 +97,9 @@ function renderResults(containerId, items) {
 // ── API calls ───────────────────────────────────────────────
 async function fetchSemanticSearch() {
     clearErr('err-search');
-    document.getElementById('results-search').innerHTML = '';
+    const rsEl = document.getElementById('results-search');
+    rsEl.innerHTML = '';
+    rsEl.closest('.panel-layout').classList.remove('has-results');
 
     const query = document.getElementById('search-query').value.trim();
     const n = document.getElementById('n-search').value;
@@ -115,7 +120,9 @@ async function fetchSemanticSearch() {
 
 async function fetchSimilarMovies() {
     clearErr('err-movie');
-    document.getElementById('results-movie').innerHTML = '';
+    const rmEl = document.getElementById('results-movie');
+    rmEl.innerHTML = '';
+    rmEl.closest('.panel-layout').classList.remove('has-results');
 
     const title = document.getElementById('movie-title').value.trim();
     const n = document.getElementById('n-movie').value;
